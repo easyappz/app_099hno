@@ -1,37 +1,47 @@
 const express = require('express');
 const mongoose = require('mongoose');
-
+const cors = require('cors');
+const bodyParser = require('body-parser');
 const apiRoutes = require('./apiRoutes');
 
-// Для работы с express
+// Initialize express app
 const app = express();
 
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// API routes
 app.use('/api', apiRoutes);
 
-/**
- * Пример создания и записи данных в базу данных
- */
-const MONGO_URI = process.env.MONGO_URI;
+// MongoDB connection
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/flower-shop';
 
-const mongoDb = mongoose.createConnection(MONGO_URI);
+const mongoDb = mongoose.createConnection(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
 mongoDb
   .asPromise()
   .then(() => {
-    console.log('MongoDB connected');
+    console.log('MongoDB connected successfully');
   })
   .catch((err) => {
     console.error('MongoDB connection error:', err);
   });
 
-// const MongoTestSchema = new mongoose.Schema({
-//   value: { type: String, required: true },
-// });
+// Make mongoDb accessible globally
+global.mongoDb = mongoDb;
 
-// const MongoModelTest = global.mongoDb.model('Test', MongoTestSchema);
+// Default route
+app.get('/', (req, res) => {
+  res.send('Flower Shop Backend is running');
+});
 
-// const newTest = new MongoModelTest({
-//   value: 'test-value',
-// });
-
-// newTest.save();
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
